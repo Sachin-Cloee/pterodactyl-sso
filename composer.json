@@ -1,5 +1,5 @@
 {
-    "name": "paymenter/pterodactyl-sso",
+    "name": "sachin-cloee/pterodactyl-sso",
     "description": "Pterodactyl 2.x panel extension that signs customers in from a Paymenter billing installation using signed, single-use login links.",
     "type": "pterodactyl-extension",
     "license": "MIT",
@@ -7,7 +7,11 @@
         "pterodactyl",
         "pterodactyl-extension",
         "paymenter",
-        "sso"
+        "sso",
+        "single-sign-on",
+        "billing",
+        "laravel",
+        "php"
     ],
     "require": {
         "php": "^8.3"
@@ -21,5 +25,9 @@
         "pterodactyl": {
             "manifest": "extension.json"
         }
+    },
+    "support": {
+        "issues": "https://github.com/Sachin-Cloee/pterodactyl-sso/issues",
+        "source": "https://github.com/Sachin-Cloee/pterodactyl-sso"
     }
 }

@@ -18,13 +18,16 @@ administrators and two-factor accounts cannot use SSO at all.
 
 ## Install
 
-Copy this directory to the panel host, then run:
+Download the latest `pterodactyl-sso-<version>.pteroext` from the
+[releases page](https://github.com/Sachin-Cloee/pterodactyl-sso/releases),
+copy it to the panel host and run:
 
 ```sh
-php artisan p:extension:install /path/to/paymenter-sso --enable
+php artisan p:extension:install /path/to/pterodactyl-sso-1.0.0.pteroext --enable
 ```
 
-Or install it from the admin area under **Admin → Extensions**.
+You can also install from a checkout of this repository, or upload the package
+in the admin area under **Admin → Extensions**.
 
 Afterwards make sure the web server user owns the new files:
 
@@ -112,12 +115,15 @@ If the panel runs behind multiple app servers, use a shared cache store
 - [ ] With **Require HTTPS** on, an HTTP request fails (`sso_error=insecure`).
 - [ ] Panel Activity log shows an `auth:success` entry for an accepted login.
 
-## Publishing
+## Repository and Packagist
 
-This directory is a self-contained Composer package (its own `composer.json`,
-PSR-4 autoload, `extension.json` manifest). To publish on Packagist, split it
-into its own repository and adjust `name` in `composer.json` to your vendor
-namespace if `paymenter/pterodactyl-sso` is not yours.
+- Source and releases: <https://github.com/Sachin-Cloee/pterodactyl-sso>
+- Packagist: [`sachin-cloee/pterodactyl-sso`](https://packagist.org/packages/sachin-cloee/pterodactyl-sso)
+- Issues: <https://github.com/Sachin-Cloee/pterodactyl-sso/issues>
+
+Pterodactyl extensions are installed with `p:extension:install`, not via
+`composer require`. Packagist and the releases page exist to provide versioned,
+downloadable archives.
 
 ## License
 
