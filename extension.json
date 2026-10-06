@@ -1,0 +1,15 @@
+{
+    "id": "paymenter-sso",
+    "name": "Paymenter SSO",
+    "version": "1.0.0",
+    "description": "Sign customers in from a Paymenter billing installation with signed, single-use login links.",
+    "author": "Cloee",
+    "provider": "PaymenterSso\\PaymenterSsoServiceProvider",
+    "autoload": {
+        "PaymenterSso\\": "src"
+    },
+    "requires": {
+        "panel": "^2.0.0-dev",
+        "php": "^8.3"
+    }
+}
