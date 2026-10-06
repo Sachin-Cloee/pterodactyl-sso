@@ -32,23 +32,34 @@ the existing `/sso-wemx` endpoint instead of this package.
 
 ## Install
 
-Download the latest `pterodactyl-sso-<version>.pteroext` from the
-[releases page](https://github.com/Sachin-Cloee/pterodactyl-sso/releases),
-copy it to the panel host and run:
+Run these commands on the panel host, in the panel directory:
 
 ```sh
-php artisan p:extension:install /path/to/pterodactyl-sso-1.0.0.pteroext --enable
+composer require sachin-cloee/pterodactyl-sso
+php artisan p:extension:install vendor/sachin-cloee/pterodactyl-sso --enable
 ```
 
-Then make sure the web server user owns the new files:
+The second command is required: Pterodactyl 2.x only loads extensions from its
+`extensions/` directory, so the package is copied there as
+`extensions/paymenter-sso`.
+
+Then make sure the web server user owns the installed files:
 
 ```sh
 chown -R www-data:www-data /var/www/pterodactyl/extensions/paymenter-sso \
   /var/www/pterodactyl/public/assets/extensions
 ```
 
-> Pterodactyl extensions are installed with `p:extension:install`, not
-> `composer require`.
+To update later:
+
+```sh
+composer update sachin-cloee/pterodactyl-sso
+php artisan p:extension:install vendor/sachin-cloee/pterodactyl-sso --enable
+```
+
+Prefer a manual install? Download the `.pteroext` from the
+[releases page](https://github.com/Sachin-Cloee/pterodactyl-sso/releases) and
+pass that path to `p:extension:install` instead.
 
 ## Configure
 
