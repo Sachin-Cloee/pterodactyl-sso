@@ -27,8 +27,15 @@ use Pterodactyl\Services\Extensions\ExtensionSettings;
  * - each nonce is accepted exactly once (atomic cache add), so a captured URL
  *   cannot be replayed
  * - the panel user is loaded server-side; no caller-supplied identity is trusted
- * - completion goes through the panel's own login service, so two-factor
- *   accounts receive the normal checkpoint instead of a bypass
+ * - configurable policy gates (all default on): HTTPS-only requests, no root
+ *   administrators, and no two-factor accounts — so a billing session can
+ *   never produce an administrative panel session or act as an alternative
+ *   path into a protected account
+ * - when the two-factor block is disabled, completion still goes through the
+ *   panel's own login service, so those accounts receive the normal checkpoint
+ *   instead of a bypass
+ * - successful logins are audited by core (DirectLogin => auth:success);
+ *   rejected links are logged here with the reason and IP
  */
 final class LoginController
 {
@@ -51,24 +58,43 @@ final class LoginController
 
     private const SERVER_IDENTIFIER_PATTERN = '/^[a-z0-9]{1,64}$/i';
 
+    private const ERROR_INSECURE = 'insecure';
+
+    private const ERROR_ADMIN_BLOCKED = 'admin-blocked';
+
+    private const ERROR_TWO_FACTOR_BLOCKED = 'two-factor-blocked';
+
     public function __construct(private readonly ExtensionSettings $settings) {}
 
     public function __invoke(Request $request, CompletesLogins $logins): RedirectResponse
     {
+        if ($this->setting('require_https', true) && !$request->isSecure()) {
+            return $this->failed($request, self::ERROR_INSECURE);
+        }
+
         $verification = $this->verify($request);
 
         if ($verification['error'] !== null) {
-            return $this->failed($request, $verification['error']);
+            return $this->failed($request, $verification['error'], $verification['attempted_user_id']);
         }
 
         /** @var User $user */
         $user = $verification['user'];
         $server = $verification['server'];
 
+        // The signed link is already consumed at this point: a policy outcome
+        // is deterministic for the account, so there is nothing to replay.
+        $blockedReason = $this->blockedReason($user);
+
+        if ($blockedReason !== null) {
+            return $this->failed($request, $blockedReason, $user->id);
+        }
+
         $result = $logins->complete($user);
 
         if (!$result->complete) {
-            // Two-factor accounts continue through the normal checkpoint.
+            // Only reachable when the two-factor block is disabled; those
+            // accounts continue through the normal checkpoint.
             return redirect()->to('/auth/login?sso=checkpoint');
         }
 
@@ -76,7 +102,23 @@ final class LoginController
     }
 
     /**
-     * @return array{user: ?User, server: ?string, error: ?string}
+     * Policy gates applied to an otherwise valid link.
+     */
+    private function blockedReason(User $user): ?string
+    {
+        if ($this->setting('block_root_admins', true) && (bool) $user->root_admin) {
+            return self::ERROR_ADMIN_BLOCKED;
+        }
+
+        if ($this->setting('block_two_factor_users', true) && (bool) $user->use_totp) {
+            return self::ERROR_TWO_FACTOR_BLOCKED;
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{user: ?User, server: ?string, error: ?string, attempted_user_id: ?int}
      */
     private function verify(Request $request): array
     {
@@ -139,27 +181,39 @@ final class LoginController
         $user = User::query()->find((int) $userId);
 
         if (!$user instanceof User) {
-            return $this->failure('unknown-user');
+            return $this->failure('unknown-user', (int) $userId);
         }
 
-        return ['user' => $user, 'server' => $server, 'error' => null];
+        return ['user' => $user, 'server' => $server, 'error' => null, 'attempted_user_id' => (int) $userId];
     }
 
     /**
-     * @return array{user: null, server: null, error: string}
+     * @return array{user: null, server: null, error: string, attempted_user_id: ?int}
      */
-    private function failure(string $reason): array
+    private function failure(string $reason, ?int $attemptedUserId = null): array
     {
-        return ['user' => null, 'server' => null, 'error' => $reason];
+        return ['user' => null, 'server' => null, 'error' => $reason, 'attempted_user_id' => $attemptedUserId];
     }
 
-    private function failed(Request $request, string $reason): RedirectResponse
+    private function failed(Request $request, string $reason, ?int $userId = null): RedirectResponse
     {
         Log::warning('paymenter-sso: rejected login link', [
             'reason' => $reason,
+            'user_id' => $userId,
             'ip' => $request->ip(),
         ]);
 
         return redirect()->to('/auth/login?' . http_build_query(['sso_error' => $reason]));
+    }
+
+    private function setting(string $key, bool $default): bool
+    {
+        $value = $this->settings->get($key, $default);
+
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? $default;
     }
 }

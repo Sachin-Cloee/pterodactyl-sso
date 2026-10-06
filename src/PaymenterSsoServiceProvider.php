@@ -32,6 +32,21 @@ final class PaymenterSsoServiceProvider extends ExtensionProvider
                 ->label('Shared secret')
                 ->help('Must match the SSO Secret Key configured on the Paymenter server row for this panel. Links signed with a different secret are rejected.')
                 ->secret(),
+            ExtensionSettingDefinition::make('require_https', 'require_https', true, ['boolean'])
+                ->label('Require HTTPS')
+                ->help('Reject auto-login requests that did not arrive over HTTPS, so a signed link can never be intercepted on the wire. Turn off only for local development panels.')
+                ->field('toggle')
+                ->normalizeUsing(fn (mixed $value): bool => $value === true),
+            ExtensionSettingDefinition::make('block_root_admins', 'block_root_admins', true, ['boolean'])
+                ->label('Block root administrators')
+                ->help('Refuse auto-login for panel accounts with root administrator rights. A billing session must never produce an administrative panel session; admins sign in with their own credentials.')
+                ->field('toggle')
+                ->normalizeUsing(fn (mixed $value): bool => $value === true),
+            ExtensionSettingDefinition::make('block_two_factor_users', 'block_two_factor_users', true, ['boolean'])
+                ->label('Block two-factor accounts')
+                ->help('Refuse auto-login for accounts with two-factor authentication enabled, so SSO cannot be used as an alternative path into a protected account. When disabled, those users continue through the normal two-factor checkpoint.')
+                ->field('toggle')
+                ->normalizeUsing(fn (mixed $value): bool => $value === true),
         ]));
     }
 
