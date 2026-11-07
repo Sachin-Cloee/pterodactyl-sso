@@ -32,6 +32,14 @@ the existing `/sso-wemx` endpoint instead of this package.
 
 ## Install
 
+### One-line install
+
+From `/var/www/pterodactyl` on the panel host:
+
+```sh
+curl -fL https://github.com/Sachin-Cloee/pterodactyl-sso/releases/download/v1.1.0/pterodactyl-sso-1.1.0.pteroext -o /tmp/pterodactyl-sso-1.1.0.pteroext && php artisan p:extension:install /tmp/pterodactyl-sso-1.1.0.pteroext --enable
+```
+
 ### Release archive (recommended)
 
 Download the latest `pterodactyl-sso-<version>.pteroext` from the
@@ -39,8 +47,11 @@ Download the latest `pterodactyl-sso-<version>.pteroext` from the
 run on the panel host:
 
 ```sh
-php artisan p:extension:install /path/to/pterodactyl-sso-1.0.0.pteroext --enable
+php artisan p:extension:install /path/to/pterodactyl-sso-<version>.pteroext --enable
 ```
+
+`--enable` installs and enables the extension in one step. Re-run the same
+command to update an existing install; the extension settings are kept.
 
 ### With Composer
 
@@ -58,6 +69,9 @@ there as `extensions/paymenter-sso`.
 without a git checkout Composer assumes the root package is `1.0.0`, which
 trips the `roave/security-advisories` conflict rule for `pterodactyl/panel
 <=1.12.4` and fails the install. On a git-based panel you can omit it.
+
+The Paymenter **My Servers → Open Panel** button and the service page **Auto
+Login to Panel** button both use this extension.
 
 Then make sure the web server user owns the installed files:
 
